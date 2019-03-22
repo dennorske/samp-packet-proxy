@@ -63,7 +63,7 @@ class UDPProxy:
       return False  
     return True
 
-  def handle_external_packet( , handler):
+  def handle_external_packet(self, handler):
     (payload, socket) = handler.request
     client_address = handler.client_address
     #print("Got external packet %r from %r on %r len: %r" % (payload, client_address, socket.getsockname(), len(payload)))
