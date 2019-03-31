@@ -30,8 +30,6 @@ This how too implies that your server port is `7777`, and your proxy port is `77
 3. Repack the packet going out from the proxy (to the server) so it contains the IP from the origin. Why? Because else all IP's ingame will show 127.0.0.1 and banning won't work. Please have a look at this: https://scapy.net/
 
 ## Known issues:
-- If the python script returns an error: "Too many open files" 
-      - Raise the ULIMIT on your linux distro - each UDP server in this code creates 1 open "file". If you get 2k packets per second, you can basically only have `timeout`in the code as 0.5 seconds. Default ULIMIT value on linux is usually 1024.
 - ~~Havent tested this in full scale yet so unaware of performance issues. Please report back.~~ It works
 
 ## other

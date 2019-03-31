@@ -22,14 +22,15 @@ SERVER_PORT = 7777
 PROXY_PORT = 7778
 SAMP_SERVER_ADDRESS = "YOUR SERVER IP" #Public ip
 
-SAMP_SERVER_LOCALHOST = "127.0.0.1" #assumes you run this on the same server as samp serber
+SAMP_SERVER_LOCALHOST = "127.0.0.1" #assumes you run this on the same server as samp server
 SAMP_SERVER_ADDRESS_BYTES = socket.inet_aton(SAMP_SERVER_ADDRESS)
-SAMP_SERVER_LOCAL_ADDRESS_BYTES = socket.inet_aton(SAMP_SERVER_LOCALHOST)
 
 info = " "
 rules = " "
 clients = " "
 detail = " "
+isonline = False
+
 
 iplogpos = 0
 iplog = []
@@ -48,6 +49,7 @@ class UDPServer:
     global rules
     global clients
     global detail
+    global isonline
 
     socket.setdefaulttimeout(1)
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -73,7 +75,10 @@ class UDPServer:
         self.sock.sendto(packet.encode(), (SAMP_SERVER_LOCALHOST, SERVER_PORT))
         clients = self.sock.recv(1024)[11:]
 
+        isonline = True
+
       else:
+        isonline = False
         print("Server unable to be reached")
       time.sleep(2)
 
@@ -119,6 +124,8 @@ class UDPServer:
     (payload, socket) = handler.request
     client_address = handler.client_address
 
+    if isonline == False: #server is offline
+      return False
     
     if payload[0:4] != b'SAMP': #could be sync packets, no need to go further
       #print("%a",payload)
@@ -183,5 +190,3 @@ if __name__ == '__main__':
   target_address = ("127.0.0.1", SERVER_PORT)
   proxy = UDPServer(bind_address, target_address)
   proxy.start()
- 
-
