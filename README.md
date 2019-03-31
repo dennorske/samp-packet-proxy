@@ -1,18 +1,25 @@
 # samp-packet-proxy
-A proxy that will throttle / filter UDP packages by reading the payload and frequency of them, before passing them over to the SA-MP server.
+~~A proxy that will throttle / filter UDP packages by reading the payload and frequency of them, before passing them over to the SA-MP server.~~
+A proxy that querys and runs along side a sa:mp server, caches the result, then when clients query the server, it sends the cached results. Amazing.
+
 
 ## Requirements for the system running it;
 1. You need to be able to run python scripts on your host. That means; on your host system.
 2. You need python 3(.7) installed
+3. You need iptables
+4. You need not to ask nick or denNorske how to run this 37 million times
 
 ## How to use
-1. Edit your server.cfg and set `port 7850`. This is what the proxy binds to the server with. Can be changed by altering `SERVER_PROXY_PORT` in the code.
-2. also add: `bind 127.0.0.1` in server.cfg.
-3. Make sure `PUBLIC_PORT`in the code matches the port you are using for your server. Set to 7777 by default.
-4. Run the **pack-scan.py** file using `python3 pack-scan.py & bg`. Proxy is enabled.
-5. Run the samp server (make sure it's bound to the right port)
-6. Packets should now pass through servers internet-interface --> proxy server --> samp
-7. They will also return through the proxy back to the client. TTL for the UDP server are 4s atm, can be adjusted down..
+This how too implies that your server port is `7777`, and your proxy port is `7778` and that your a somewhat familiar with python
+1. Edit pack-scan.py and change `SAMP_SERVER_ADDRESS = "YOUR SERVER IP"` to your servers public ip
+2. Edit `SERVER_PORT = 7777` to match your servers public port
+3. Edit `PROXY_PORT = 7778` to whatever non used port you want
+4. Apply following iptable rules. Make sure to edit ports accordingly.
+    `iptables -t nat -A PREROUTING -p udp --dport 7777 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7778` This rule routes all query packets on port 7777, to port 7778.
+    `iptables -I INPUT -p udp --dport 7778 -m string --algo bm --string 'SAMP' -m hashlimit ! --hashlimit-upto 10/sec --hashlimit-burst 15/sec --hashlimit-mode srcip --hashlimit-name query -j DROP` This firewall rule is a rate liming rule that limits querys per second to prevent other bad things from happening
+5. Run the proxy with `python3 pack-scan.py`
+6. Profit?
+
 
 
 
@@ -25,11 +32,12 @@ A proxy that will throttle / filter UDP packages by reading the payload and freq
 ## Known issues:
 - If the python script returns an error: "Too many open files" 
       - Raise the ULIMIT on your linux distro - each UDP server in this code creates 1 open "file". If you get 2k packets per second, you can basically only have `timeout`in the code as 0.5 seconds. Default ULIMIT value on linux is usually 1024.
-- Havent tested this in full scale yet so unaware of performance issues. Please report back.
+- ~~Havent tested this in full scale yet so unaware of performance issues. Please report back.~~ It works
 
 ## other
 Please contribute as you wish, I will check for pull requests and so.
 Big thanks to my community (xSF) and H20, Lilkaapa, Akira, Frxstrem for their amazing help and me bothering them so much.
 Thanks to mum.
+Thanks sweet baby jesus for the doritos and mountain dew that helped me make this possible. Hallelujah brutha, amen!
 
 
