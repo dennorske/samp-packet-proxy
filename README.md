@@ -1,16 +1,15 @@
 # samp-packet-proxy
-~~A proxy that will throttle / filter UDP packages by reading the payload and frequency of them, before passing them over to the SA-MP server.~~
-A proxy that querys and runs along side a sa:mp server, caches the result, then when clients query the server, it sends the cached results. Amazing.
+A proxy that querys and runs along side a sa:mp server, caches the result, then when clients query the server, it sends the cached results. Prevents SA-MP servers being overwhelmed by UDP floods and appear offline.
 
 
-## Requirements for the system running it;
-1. You need to be able to run python scripts on your host. That means; on your host system.
+## Requirements for the system running it
+1. You need to be able to run python scripts on your host. That means; on your host system. If you don't have a VPS there is no need to continue. 
 2. You need python 3(.7) installed
 3. You need iptables
 4. You need not to ask nick or denNorske how to run this 37 million times
 
 ## How to use
-This how too implies that your server port is `7777`, and your proxy port is `7778` and that your a somewhat familiar with python
+This how too implies that your server port is `7777`, and your proxy port is `7778` and that your a somewhat familiar with python. If not, *change this* accordingly.
 1. Edit pack-scan.py and change `SAMP_SERVER_ADDRESS = "YOUR SERVER IP"` to your servers public ip
 2. Edit `SERVER_PORT = 7777` to match your servers public port
 3. Edit `PROXY_PORT = 7778` to whatever non used port you want
@@ -21,21 +20,17 @@ This how too implies that your server port is `7777`, and your proxy port is `77
 6. Profit?
 
 
-
-
 ## To-do: 
-*(Can someone do this? SA-MP master list is suffering and I am out of knowledge and time right now..)*
-1. Create a rate limiter under the filter function - filter the packets from IP's and let them only request certain OP-codes with certain X miliseconds rate.
-2. Get the packet filtering to work with all packets sent through. It should only filter SAMP packets 
-3. Repack the packet going out from the proxy (to the server) so it contains the IP from the origin. Why? Because else all IP's ingame will show 127.0.0.1 and banning won't work. Please have a look at this: https://scapy.net/
+- Create a Server plugin that could handle this easier for people without VPS's. 
 
 ## Known issues:
-- ~~Havent tested this in full scale yet so unaware of performance issues. Please report back.~~ It works
+It works, tested on multiple servers already
 
-## other
-Please contribute as you wish, I will check for pull requests and so.
+## Credits and praise
+Please contribute as you wish, pull requests are preffered from separate branches.
 Big thanks to my community (xSF) and H20, Lilkaapa, Akira, Frxstrem for their amazing help and me bothering them so much.
 Thanks to mum.
+
 Thanks sweet baby jesus for the doritos and mountain dew that helped me make this possible. Hallelujah brutha, amen!
 
 
