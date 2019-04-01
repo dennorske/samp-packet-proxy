@@ -18,11 +18,13 @@ import socketserver
 import threading
 import time
 
-SERVER_PORT = 7777
-PROXY_PORT = 7778
+####################### MUST BE CONFIGURED ##########################
+SERVER_PORT = 7777 #Assuming your samp server runs on this port
+PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
 SAMP_SERVER_ADDRESS = "YOUR SERVER IP" #Public ip
+#####################################################################
 
-SAMP_SERVER_LOCALHOST = "127.0.0.1" #assumes you run this on the same server as samp server
+SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
 SAMP_SERVER_ADDRESS_BYTES = socket.inet_aton(SAMP_SERVER_ADDRESS)
 
 info = " "
@@ -126,15 +128,8 @@ class UDPServer:
 
     if isonline == False: #server is offline
       return False
-    
-    if payload[0:4] != b'SAMP': #could be sync packets, no need to go further
-      #print("%a",payload)
-      return False
 
-    if len(payload) <4: #because the packet size varies - can't really determine the defaults here.
-      return False
-
-    if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES:
+    if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES: #Payload with IP bytes are not matching your public IP
       print("Unknown host %r %r" % (socket.inet_ntoa(payload[4:8]), SAMP_SERVER_ADDRESS))
       return False 
     
@@ -154,7 +149,7 @@ class UDPServer:
       return True
       
 
-    elif payload[10] in b'r':
+    elif payload[10] in b'r': 
       #print(rules)
       client_address = handler.client_address
       self.server.socket.sendto(payload+rules, client_address)
