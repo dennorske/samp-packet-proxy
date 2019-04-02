@@ -21,7 +21,7 @@ import binascii
 ####################### MUST BE CONFIGURED ##########################
 SERVER_PORT = 7777 #Assuming your samp server runs on this port
 PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "YOUR_SERVER_IP_HERE" #Public ip
+SAMP_SERVER_ADDRESS = "SERVER-PUBLIC_IP-HERE" #Public ip
 #####################################################################
 
 SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
@@ -39,7 +39,7 @@ iplog = []
 
 
 class UDPServer:
-  def __init__(self, bind_address, target_address, internal_host = "127.0.0.1", timeout = 0.1): #ulimit?
+  def __init__(self, bind_address, target_address, internal_host = "127.0.0.1", timeout = 0.3): #ulimit?
     self.target_address = target_address
     self.timeout = timeout
 
@@ -79,14 +79,14 @@ class UDPServer:
 
         isonline = True
 
+        time.sleep(2)
       else:
         isonline = False
-        print("Server unable to be reached. Did you configure the script correctly? Retrying..")
-      time.sleep(2)
+        print("Server unable to be reached... Could be because of the UDP spam, give it a moment..")
 
   def ping(self):
 
-    pack = self.assemblePacket("i")
+    pack = self.assemblePacket("r")
     self.sock.sendto(pack, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
     try:
       reply = self.sock.recv(1024)[10:]
@@ -116,7 +116,7 @@ class UDPServer:
     q.daemon = True
     q.start()
     self.server.serve_forever()
-    self.server.socket.settimeout(0.1)
+    self.server.socket.settimeout(self.timeout)
 
 
   def stop(self):
@@ -125,7 +125,8 @@ class UDPServer:
   def handle_external_packet(self, handler):
     (payload, socket) = handler.request
     client_address = handler.client_address
-
+    if(isonline == False):
+      return
     if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES: #Payload with IP bytes are not matching your public IP
       return False 
     
@@ -140,28 +141,32 @@ class UDPServer:
     elif payload[10] in b'i':
 
       client_address = handler.client_address
-      self.server.socket.sendto(payload+info, client_address)
+      argument = payload+info
+      self.server.socket.sendto(argument, client_address)
       return True
       
 
     elif payload[10] in b'r': 
       client_address = handler.client_address
-      self.server.socket.sendto(payload+rules, client_address)
-      print(binascii.hexlify(payload+rules))
+      argument = payload+rules
+      self.server.socket.sendto(argument, client_address)
+      #print(binascii.hexlify(payload+rules))
       return True
       
 
     elif payload[10] in b'd':
       client_address = handler.client_address
-      self.server.socket.sendto(payload+detail, client_address)
+      argument = payload+detail
+      self.server.socket.sendto(argument, client_address)
       return True
       
 
     elif payload[10] in b'c':
       client_address = handler.client_address
-      self.server.socket.sendto(payload+clients, client_address)
-      thebytes=payload+clients
-      print(len(payload+clients))
+      argument = payload+clients
+      self.server.socket.sendto(argument, client_address)
+      #thebytes=payload+clients
+      #print(len(payload+clients))
       return True 
     return
 
@@ -171,7 +176,8 @@ def create_handler(func):
       try:
         func(self)
       except Exception as e:
-        print("An error occured: %s" % (e,))
+        print("An error occurred: %s" % (e,))
+      func(self)
   return Handler
 
 if __name__ == '__main__':
