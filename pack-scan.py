@@ -19,9 +19,9 @@ import threading
 import time
 
 ####################### MUST BE CONFIGURED ##########################
-SERVER_PORT = 7778 #Assuming your samp server runs on this port
-PROXY_PORT = 7779 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "54.38.10.194" #Public ip
+SERVER_PORT = 7777 #Assuming your samp server runs on this port
+PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
+SAMP_SERVER_ADDRESS = "INSERT SERVER IP HERE" #Public ip
 #####################################################################
 
 SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
