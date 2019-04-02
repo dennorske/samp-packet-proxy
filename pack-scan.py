@@ -17,11 +17,11 @@ import socket
 import socketserver
 import threading
 import time
-
+import binascii
 ####################### MUST BE CONFIGURED ##########################
 SERVER_PORT = 7777 #Assuming your samp server runs on this port
 PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "INSERT SERVER IP HERE" #Public ip
+SAMP_SERVER_ADDRESS = "YOUR_SERVER_IP_HERE" #Public ip
 #####################################################################
 
 SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
@@ -116,7 +116,7 @@ class UDPServer:
     q.daemon = True
     q.start()
     self.server.serve_forever()
-    self.server.settimeout(0.1)
+    self.server.socket.settimeout(0.1)
 
 
   def stop(self):
@@ -125,59 +125,42 @@ class UDPServer:
   def handle_external_packet(self, handler):
     (payload, socket) = handler.request
     client_address = handler.client_address
-    #print("External Packet called, payload: {} - Client: {}".format(payload, client_address))
-
-    # for x in range(0, 11):
-    #   print("{}: {}".format(x, payload[x]))
-    # if isonline == False: #server is offline
-    #   return False
 
     if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES: #Payload with IP bytes are not matching your public IP
-      print("Unknown host %r %r" % (payload[4:8], SAMP_SERVER_ADDRESS_BYTES))
       return False 
     
     if payload[10] not in b'pirdc': #opcodes defined here: https://wiki.sa-mp.com/wiki/Query/Request#Opcodes
-      print("Wrong opcode %r" % (payload[10]))
       return False 
 
     if payload[10] in b'p': #Ping packets are just sent back to the client 
       client_address = handler.client_address
       self.server.socket.sendto(payload, client_address)
-      print("ping")
       return True
 
     elif payload[10] in b'i':
 
       client_address = handler.client_address
       self.server.socket.sendto(payload+info, client_address)
-      print("info sent: {}".format(payload+info))
-      print(len(payload+info)) #114
       return True
       
 
     elif payload[10] in b'r': 
-      print("rules")
       client_address = handler.client_address
       self.server.socket.sendto(payload+rules, client_address)
-      print("info sent: {}".format(payload+rules))
-      print(len(payload+rules)) #116
+      print(binascii.hexlify(payload+rules))
       return True
       
 
     elif payload[10] in b'd':
-      print("detail")
       client_address = handler.client_address
       self.server.socket.sendto(payload+detail, client_address)
-      print("info sent: {}".format(payload+detail))
-      print(len(payload+detail))
       return True
       
 
     elif payload[10] in b'c':
-      print("clients")
       client_address = handler.client_address
       self.server.socket.sendto(payload+clients, client_address)
-      print("info sent: {}".format(payload+clients))
+      thebytes=payload+clients
       print(len(payload+clients))
       return True 
     return
@@ -193,7 +176,7 @@ def create_handler(func):
 
 if __name__ == '__main__':
   print("Listening on port", PROXY_PORT, "for server",SAMP_SERVER_ADDRESS,"on port",SERVER_PORT)
-  bind_address = ("0.0.0.0", PROXY_PORT) 
+  bind_address = (SAMP_SERVER_ADDRESS, PROXY_PORT) 
   target_address = ("127.0.0.1", SERVER_PORT)
   proxy = UDPServer(bind_address, target_address)
   proxy.start()
