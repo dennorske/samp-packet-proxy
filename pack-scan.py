@@ -19,9 +19,9 @@ import threading
 import time
 
 ####################### MUST BE CONFIGURED ##########################
-SERVER_PORT = 7777 #Assuming your samp server runs on this port
-PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "YOUR SERVER IP" #Public ip
+SERVER_PORT = 7778 #Assuming your samp server runs on this port
+PROXY_PORT = 7779 #Assuming no other servers are running on this one, as it will be taken by the code.
+SAMP_SERVER_ADDRESS = "54.38.10.194" #Public ip
 #####################################################################
 
 SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
@@ -60,37 +60,38 @@ class UDPServer:
       if self.ping():
 
         packet = self.assemblePacket("i")
-        self.sock.sendto(packet.encode(), (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
         info = self.sock.recv(1024)[11:]
 
-
         packet = self.assemblePacket("r")
-        self.sock.sendto(packet.encode(), (SAMP_SERVER_LOCALHOST, SERVER_PORT))
-        rules = self.sock.recv(1024)[11:]
-
+        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        rules_full = self.sock.recv(1024)
+        #print(rules_full)
+        rules = rules_full[11:]
 
         packet = self.assemblePacket("d")
-        self.sock.sendto(packet.encode(), (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
         detail = self.sock.recv(1024)[11:]
 
         packet = self.assemblePacket("c")
-        self.sock.sendto(packet.encode(), (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
         clients = self.sock.recv(1024)[11:]
 
         isonline = True
 
       else:
         isonline = False
-        print("Server unable to be reached")
+        print("Server unable to be reached. Did you configure the script correctly? Retrying..")
       time.sleep(2)
 
   def ping(self):
 
-    pack = self.assemblePacket("p0101")
-    self.sock.sendto(pack.encode(), (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+    pack = self.assemblePacket("i")
+    self.sock.sendto(pack, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
     try:
       reply = self.sock.recv(1024)[10:]
-      if reply == b'p0101':
+      #print(reply)
+      if(len(reply)):
         return True
       else:
         return False
@@ -98,18 +99,17 @@ class UDPServer:
       return False
       
   def assemblePacket(self, type):
-    ipSplit = str.split(SAMP_SERVER_LOCALHOST, '.')
-
-    packet = 'SAMP'
-    packet += chr(int(ipSplit[0]))
-    packet += chr(int(ipSplit[1]))
-    packet += chr(int(ipSplit[2]))
-    packet += chr(int(ipSplit[3]))
-    packet += chr(SERVER_PORT & 0xFF)
-    packet += chr(SERVER_PORT >> 8 & 0xFF)
-    packet += type
-
+    PUBLIC_PORT_BYTES = SERVER_PORT.to_bytes(2, byteorder='little')
+    packet = b'SAMP'
+    packet += SAMP_SERVER_ADDRESS_BYTES
+    packet += PUBLIC_PORT_BYTES
+    packet += bytes(type, 'utf-8')
+    if(type in 'irdc'):
+      packet += b'\00\00\00\00\00\00\00'
+    #print(packet)
     return packet
+
+
 
   def start(self):
     q = threading.Thread(target=self.querythread)
@@ -125,12 +125,15 @@ class UDPServer:
   def handle_external_packet(self, handler):
     (payload, socket) = handler.request
     client_address = handler.client_address
+    #print("External Packet called, payload: {} - Client: {}".format(payload, client_address))
 
-    if isonline == False: #server is offline
-      return False
+    # for x in range(0, 11):
+    #   print("{}: {}".format(x, payload[x]))
+    # if isonline == False: #server is offline
+    #   return False
 
     if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES: #Payload with IP bytes are not matching your public IP
-      print("Unknown host %r %r" % (socket.inet_ntoa(payload[4:8]), SAMP_SERVER_ADDRESS))
+      print("Unknown host %r %r" % (payload[4:8], SAMP_SERVER_ADDRESS_BYTES))
       return False 
     
     if payload[10] not in b'pirdc': #opcodes defined here: https://wiki.sa-mp.com/wiki/Query/Request#Opcodes
@@ -140,33 +143,42 @@ class UDPServer:
     if payload[10] in b'p': #Ping packets are just sent back to the client 
       client_address = handler.client_address
       self.server.socket.sendto(payload, client_address)
+      print("ping")
       return True
 
     elif payload[10] in b'i':
 
       client_address = handler.client_address
       self.server.socket.sendto(payload+info, client_address)
+      print("info sent: {}".format(payload+info))
+      print(len(payload+info)) #114
       return True
       
 
     elif payload[10] in b'r': 
-      #print(rules)
+      print("rules")
       client_address = handler.client_address
       self.server.socket.sendto(payload+rules, client_address)
+      print("info sent: {}".format(payload+rules))
+      print(len(payload+rules)) #116
       return True
       
 
     elif payload[10] in b'd':
-      #print(detail)
+      print("detail")
       client_address = handler.client_address
       self.server.socket.sendto(payload+detail, client_address)
+      print("info sent: {}".format(payload+detail))
+      print(len(payload+detail))
       return True
       
 
     elif payload[10] in b'c':
-      #print(clients)
+      print("clients")
       client_address = handler.client_address
       self.server.socket.sendto(payload+clients, client_address)
+      print("info sent: {}".format(payload+clients))
+      print(len(payload+clients))
       return True 
     return
 
