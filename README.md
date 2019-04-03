@@ -1,6 +1,6 @@
 # samp-packet-proxy
 A proxy that querys and runs along side a sa:mp server, caches the result, then when clients query the server, it sends the cached results. Prevents SA-MP servers being overwhelmed by UDP floods and appear offline.
-
+![Infographic](http://i.imgur.com/D3Uzmri.png)
 
 ## Requirements for the system running it
 1. You need to be able to run python scripts on your host. That means; on your host system. If you don't have a VPS there is no need to continue. 
@@ -16,8 +16,9 @@ This how too implies that your server port is `7777`, and your proxy port is `77
 4. Apply following iptable rules. Make sure to edit ports accordingly.
     `iptables -t nat -A PREROUTING -p udp --dport 7777 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7778` This rule routes all query packets on port 7777, to port 7778.
     `iptables -I INPUT -p udp --dport 7778 -m string --algo bm --string 'SAMP' -m hashlimit ! --hashlimit-upto 10/sec --hashlimit-burst 15/sec --hashlimit-mode srcip --hashlimit-name query -j DROP` This firewall rule is a rate liming rule that limits querys per second to prevent other bad things from happening
-5. Run the proxy with `python3 pack-scan.py`
-6. Profit?
+5. `iptables -t nat -A PREROUTING -p udp --dport 7777 -s 127.0.0.1 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7777` This rule make sure that internal packets find their way between the server and proxy. 
+6. Run the proxy with `python3 pack-scan.py`
+7. Profit?
 
 
 ## To-do: 
