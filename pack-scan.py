@@ -67,9 +67,7 @@ class UDPServer:
 
         packet = self.assemblePacket("r")
         self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
-        rules_full = self.sock.recv(1024)
-        #print(rules_full)
-        rules = rules_full[11:]
+        rules = self.sock.recv(1024)
 
         packet = self.assemblePacket("d")
         self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
@@ -84,7 +82,7 @@ class UDPServer:
         time.sleep(2)
       else:
         isonline = False
-        print("Server unable to be reached... Could be because of the UDP spam, give it a moment..")
+        print("Server unable to be reached...")
 
   def ping(self):
 
