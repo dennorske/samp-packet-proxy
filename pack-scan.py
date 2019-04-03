@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 
+#    The current settings assume your server is running on port 7777
 #
+#    iptables -t nat -A PREROUTING -p udp --dport 7777 -s 127.0.0.1 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7777
 #    iptables -t nat -A PREROUTING -p udp --dport 7777 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7778
 #    iptables -I INPUT -p udp --dport 7778 -m string --algo bm --string 'SAMP' -m hashlimit ! --hashlimit-upto 10/sec --hashlimit-burst 15/sec --hashlimit-mode srcip --hashlimit-name query -j DROP
 #    
@@ -21,7 +23,7 @@ import binascii
 ####################### MUST BE CONFIGURED ##########################
 SERVER_PORT = 7777 #Assuming your samp server runs on this port
 PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "SERVER-PUBLIC_IP-HERE" #Public ip
+SAMP_SERVER_ADDRESS = "Your ip" #Public ip set this to the ip you using in bind in your server.cfg
 #####################################################################
 
 SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
@@ -60,21 +62,21 @@ class UDPServer:
       if self.ping():
 
         packet = self.assemblePacket("i")
-        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         info = self.sock.recv(1024)[11:]
 
         packet = self.assemblePacket("r")
-        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         rules_full = self.sock.recv(1024)
         #print(rules_full)
         rules = rules_full[11:]
 
         packet = self.assemblePacket("d")
-        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         detail = self.sock.recv(1024)[11:]
 
         packet = self.assemblePacket("c")
-        self.sock.sendto(packet, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         clients = self.sock.recv(1024)[11:]
 
         isonline = True
@@ -86,12 +88,11 @@ class UDPServer:
 
   def ping(self):
 
-    pack = self.assemblePacket("r")
-    self.sock.sendto(pack, (SAMP_SERVER_LOCALHOST, SERVER_PORT))
+    pack = self.assemblePacket("p0101")
+    self.sock.sendto(pack, (SAMP_SERVER_ADDRESS, SERVER_PORT))
     try:
       reply = self.sock.recv(1024)[10:]
-      #print(reply)
-      if(len(reply)):
+      if reply == b'p0101':
         return True
       else:
         return False
@@ -104,9 +105,6 @@ class UDPServer:
     packet += SAMP_SERVER_ADDRESS_BYTES
     packet += PUBLIC_PORT_BYTES
     packet += bytes(type, 'utf-8')
-    if(type in 'irdc'):
-      packet += b'\00\00\00\00\00\00\00'
-    #print(packet)
     return packet
 
 
