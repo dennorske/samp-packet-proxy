@@ -67,7 +67,7 @@ class UDPServer:
 
         packet = self.assemblePacket("r")
         self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
-        rules = self.sock.recv(1024)
+        rules = self.sock.recv(1024)[11:]
 
         packet = self.assemblePacket("d")
         self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
