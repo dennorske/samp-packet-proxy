@@ -25,7 +25,8 @@ This how too implies that your server port is `7777`, and your proxy port is `77
 - Create a Server plugin that could handle this easier for people without VPS's. 
 
 ## Known issues:
-It works, tested on multiple servers already
+- Under load, script tends to stop working after approximately a week. You can set up a simple bash script to restart it automatically
+- game-state and SACNR monitor queries are not responded correctly, causing graphs to not show or show incorrectly.
 
 ## Credits and praise
 Please contribute as you wish, pull requests are preffered from separate branches.
