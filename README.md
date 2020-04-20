@@ -4,10 +4,9 @@ A proxy that querys and runs along side a sa:mp server, caches the result, then 
 
 ## What does it do?
 1. It does increases the rate at which the query mechanism can respond, by accelerating the responses.
-2. Iptables makes sure to limit the rate at which the host responds to 10/sec.
-3. It hides the server behind the proxy, so only the proxy can ask "hey what is your status" - and then the proxy spreads this information to the clients when they ask for information.
-4. It does this only at the server public port (e.g. 7777)
-5. Avoids the single-threaded workload being too high on the sa-mp server
+2. It hides the server behind the proxy, so only the proxy can ask "hey what is your status" - and then the proxy spreads this information to the clients when they ask for information.
+3. It does this only at the server public port (e.g. 7777)
+4. Avoids the single-threaded workload being too high on the sa-mp server
 
 ## What does it not do?
 1. It does not protect you against DDOS attacks.
