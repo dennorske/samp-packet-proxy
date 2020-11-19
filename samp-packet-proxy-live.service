@@ -1,0 +1,12 @@
+[Unit]
+Description = Start SA-MP Packet Proxy for Live Environment
+After = network.target
+
+[Service]
+Environment="LIVE_SERVER_PORT=7777"
+Environment="LIVE_PROXY_PORT=7778"
+Environment="LIVE_SAMP_SERVER_ADDRESS=68.183.239.18"
+ExecStart = /root/samp-packet-proxy/run_live.sh
+
+[Install]
+WantedBy = multi-user.target
