@@ -179,7 +179,7 @@ def create_handler(func):
 
 if __name__ == '__main__':
   print("Listening on port", PROXY_PORT, "for server",SAMP_SERVER_ADDRESS,"on port",SERVER_PORT)
-  bind_address = (SAMP_SERVER_ADDRESS, PROXY_PORT) 
-  target_address = ("127.0.0.1", SERVER_PORT)
+  bind_address = (SAMP_SERVER_ADDRESS, int(PROXY_PORT)) 
+  target_address = ("127.0.0.1", int(SERVER_PORT))
   proxy = UDPServer(bind_address, target_address)
   proxy.start()
