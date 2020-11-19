@@ -21,9 +21,9 @@ import threading
 import time
 import binascii
 ####################### MUST BE CONFIGURED ##########################
-SERVER_PORT = 7777 #Assuming your samp server runs on this port
-PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "Your ip" #Public ip set this to the ip you using in bind in your server.cfg
+SERVER_PORT = os.getenv('LIVE_SERVER_PORT', 7777) #Assuming your samp server runs on this port
+PROXY_PORT = os.getenv('LIVE_PROXY_PORT', 7778) #Assuming no other servers are running on this one, as it will be taken by the code.
+SAMP_SERVER_ADDRESS = os.getenv('LIVE_SAMP_SERVER_ADDRESS', "68.183.239.18") #Public ip set this to the ip you using in bind in your server.cfg
 #####################################################################
 
 SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
