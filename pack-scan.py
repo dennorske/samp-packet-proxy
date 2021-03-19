@@ -21,12 +21,12 @@ import threading
 import time
 import binascii
 ####################### MUST BE CONFIGURED ##########################
-SERVER_PORT = 7777 #Assuming your samp server runs on this port
-PROXY_PORT = 7778 #Assuming no other servers are running on this one, as it will be taken by the code.
-SAMP_SERVER_ADDRESS = "Your ip" #Public ip set this to the ip you using in bind in your server.cfg
+SERVER_PORT = 7777 #Your CURRENT samp server port. 
+PROXY_PORT = 7778 #Code hijacks this. Code will then filter, and send it to SERVER_PORT
+SAMP_SERVER_ADDRESS = "Your ip" #Public ip - set this to the ip you using in bind in your server.cfg
 #####################################################################
 
-SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server
+SAMP_SERVER_LOCALHOST = "127.0.0.1" #Edit this if you run this on a different server than the samp server. Otherwise, let it be.
 SAMP_SERVER_ADDRESS_BYTES = socket.inet_aton(SAMP_SERVER_ADDRESS)
 
 info = " "
@@ -72,14 +72,17 @@ class UDPServer:
         packet = self.assemblePacket("d")
         self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         detail = self.sock.recv(1024)[11:]
-
+        
+        #To avoid timeouts on the socket, we postpone the clientlist from the other
+        #requests. Seems like it refuses to reply all 4 packets at once.
+        time.sleep(2)
         packet = self.assemblePacket("c")
         self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         clients = self.sock.recv(1024)[11:]
 
         isonline = True
 
-        time.sleep(2)
+        time.sleep(3)
       else:
         isonline = False
         print("Server unable to be reached...")
@@ -177,7 +180,7 @@ def create_handler(func):
   return Handler
 
 if __name__ == '__main__':
-  print("Listening on port", PROXY_PORT, "for server",SAMP_SERVER_ADDRESS,"on port",SERVER_PORT)
+  print("Listening on port", PROXY_PORT, "for server",SAMP_SERVER_ADDRESS," that runs on port",SERVER_PORT)
   bind_address = (SAMP_SERVER_ADDRESS, PROXY_PORT) 
   target_address = ("127.0.0.1", SERVER_PORT)
   proxy = UDPServer(bind_address, target_address)
