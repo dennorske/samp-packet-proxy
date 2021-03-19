@@ -59,31 +59,36 @@ class UDPServer:
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     while True:
       if self.ping():
-        isonline = True
-        time.sleep(1)
-        packet = self.assemblePacket("i")
-        print(packet)
-        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
-        info = self.sock.recv(1024)[11:]
+        try:
+            isonline = True
+            time.sleep(1)
+            packet = self.assemblePacket("i")
+            print(packet)
+            self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
+            info = self.sock.recv(1024)[11:]
 
-        time.sleep(1)
-        packet = self.assemblePacket("r")
-        print(packet)
-        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
-        rules = self.sock.recv(1024)[11:]
+            time.sleep(1)
+            packet = self.assemblePacket("r")
+            print(packet)
+            self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
+            rules = self.sock.recv(1024)[11:]
 
-        time.sleep(1)
-        packet = self.assemblePacket("d")
-        print(packet)
-        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
-        detail = self.sock.recv(1024)[11:]
+            time.sleep(1)
+            packet = self.assemblePacket("d")
+            print(packet)
+            self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
+            detail = self.sock.recv(1024)[11:]
 
-        time.sleep(1)
-        packet = self.assemblePacket("c")
-        print(packet)
-        self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
-        clients = self.sock.recv(1024)[11:]
-
+            time.sleep(1)
+            packet = self.assemblePacket("c")
+            print(packet)
+            self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
+            clients = self.sock.recv(1024)[11:]
+            
+        except Exception as e:
+            print("Exception occured, skipping");
+            time.sleep(1)
+            print(e)
       else:
         isonline = False
         print("Server unable to be reached. Trying again...")
