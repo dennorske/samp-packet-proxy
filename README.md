@@ -25,14 +25,21 @@ PSST: Remember to change values to your needs.
 2. Edit `SERVER_PORT = 7777` to match your servers public port. Yes, the port you are currently using
 3. Edit `PROXY_PORT = 7778` to whatever non used port you want. It has to be an unused port. Used for step "3" in the inforgraphic, and will be taken by the script.
 4. Apply following iptable rules. Make sure to edit ports accordingly. Replace "SERVER_PORT_HERE" and "PROXY_PORT_HERE" with the ports you use.
-    `iptables -t nat -A PREROUTING -p udp --dport SERVER_PORT_HERE -m string --algo bm --string 'SAMP' -j REDIRECT --to-port PROXY_PORT_HERE` 
+
+    `iptables -t nat -A PREROUTING -p udp --dport SERVER_PORT_HERE -m string --algo bm --string 'SAMP' -j REDIRECT --to-port PROXY_PORT_HERE`
+   
     This rule routes all query packets on port 7777, to port 7778, where the script will do the filtering.
-    `iptables -I INPUT -p udp --dport PROXY_PORT_HERE -m string --algo bm --string 'SAMP' -m hashlimit ! --hashlimit-upto 10/sec --hashlimit-burst 15/sec --hashlimit-mode srcip --hashlimit-name query -j DROP` This firewall rule is a rate liming rule that limits querys per second. No need to respond to more than this per client.
-5. `iptables -t nat -A PREROUTING -p udp --dport SERVER_PORT_HERE -s 127.0.0.1 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port SERVER_PORT_HERE` 
+    
+    `iptables -I INPUT -p udp --dport PROXY_PORT_HERE -m string --algo bm --string 'SAMP' -m hashlimit ! --hashlimit-upto 10/sec --hashlimit-burst 15/sec --hashlimit-mode srcip --hashlimit-name query -j DROP` 
+    
+    This firewall rule is a rate liming rule that limits querys per second. No need to respond to more than this per client.
+    
+    `iptables -t nat -A PREROUTING -p udp --dport SERVER_PORT_HERE -s 127.0.0.1 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port SERVER_PORT_HERE` 
+    
     This rule make sure that internal packets find their way between the server and proxy. (Returning from samp server). Do not replace `'SAMP'` - because, this is actually something we are looking for inside a packet. If you change that, the rule will fail.
-6. Run the proxy with `python3 pack-scan.py`
-6a. Set up systemd service if you want to easily stop and start the proxy. (Update coming soon to show how this can be done) 
-7. Profit?
+5. Run the proxy with `python3 pack-scan.py`
+5a. Set up systemd service if you want to easily stop and start the proxy. (Update coming soon to show how this can be done) 
+6. Profit?
  
 ## Removing IPTABLES rules:
 Please _replace_ `-A` (or `-I`) with `-D`. -D means "delete". Look at examples. The ports has to match your setup! Replace "SERVER_PORT_HERE" and "PROXY_PORT_HERE". You can also check what your existing rules are by checking `iptables-save` output in terminal.
