@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
+import logging
+import socket
+import socketserver
+import threading
+import time
+from enum import Enum
+
 
 #    The current settings assume your server is running on port 7777
 #
-#    iptables -t nat -A PREROUTING -p udp --dport 7777 -s 127.0.0.1 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7777  # noqa
 #    iptables -t nat -A PREROUTING -p udp --dport 7777 -m string --algo bm --string 'SAMP' -j REDIRECT --to-port 7778  # noqa
 #    iptables -I INPUT -p udp --dport 7778 -m string --algo bm --string 'SAMP' -m hashlimit ! --hashlimit-upto 10/sec --hashlimit-burst 15/sec --hashlimit-mode srcip --hashlimit-name query -j DROP  # noqa
 #
@@ -14,17 +20,10 @@
 #
 
 
-import socket
-import socketserver
-import threading
-import time
-from enum import Enum
-
-
 ####################### MUST BE CONFIGURED #####################  # noqa
 SERVER_PORT = 7777  # Assuming your samp server runs on this port
 PROXY_PORT = 7778  # This script will take this port.
-SAMP_SERVER_ADDRESS = "INSERT PUBLIC IP"  # Public ip for your server SAMP srv
+SAMP_SERVER_ADDRESS = "123.123.123.123"  # Public ip for your server SAMP srv
 
 # Edit the below if you run this on a different server than the samp server
 # Useful if you have this script running on a separate server.
@@ -85,7 +84,7 @@ class UDPServer:
             self.sock.sendto(packet, (SAMP_SERVER_ADDRESS, SERVER_PORT))
             answer = self.sock.recv(1024)[11:]
         except socket.timeout:
-            print(f"Timed out getting info for opcode '{query.value}'")
+            logging.error(f"Timed out getting info for opcode '{query.value}'")
         return answer
 
     def querythread(self) -> None:
@@ -112,7 +111,7 @@ class UDPServer:
                     setattr(server, attribute, self.send_server_query(status))
                     time.sleep(SHORT_SLEEP_DURATION)
             else:
-                print(
+                logging.error(
                     "Packet-proxy could not reach the samp server.. "
                     + "Trying again.."
                 )
@@ -144,33 +143,40 @@ class UDPServer:
         self.server.serve_forever()
 
     def stop(self):
-        self.server.shutdown()
+        self.server.stop_thread = True
+        # self.server.shutdown()
 
-    def handle_external_packet(self, handler):
+    def handle_external_packet(
+        self, handler, sampserver: ServerStatus = server
+    ):
         """When external clients query the server, this method is called.
         Depending on which data is requested, the reply is generated.
         """
         payload, _ = handler.request
 
-        if not server.isonline:
+        if not sampserver.isonline:
+            logging.debug("Server is offline")
             return False
         if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES:
+            logging.debug("Server address does not match")
             return False
         if payload[10] not in b"pirdc":
+            logging.debug("Invalid opcode received")
             return False
 
         data_lookup = {
             b"p": None,
-            b"i": server.info,
-            b"r": server.rules,
-            b"d": server.detail,
-            b"c": server.clients,
+            b"i": sampserver.info,
+            b"r": sampserver.rules,
+            b"d": sampserver.detail,
+            b"c": sampserver.clients,
         }
 
-        response_data = data_lookup.get(payload[10])
+        response_data = data_lookup.get(payload[10:11])
         if response_data is not None:
             self._send_packet(handler, payload, response_data)
             return True
+        logging.debug("Ping packet received")
         return False
 
     def _send_packet(self, handler, payload, data):
