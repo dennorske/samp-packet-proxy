@@ -153,7 +153,7 @@ class UDPServer:
         payload, _ = handler.request
 
         if not server.isonline:
-            return
+            return False
         if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES:
             return False
         if payload[10] not in b"pirdc":
@@ -171,7 +171,7 @@ class UDPServer:
         if response_data is not None:
             self._send_packet(handler, payload, response_data)
             return True
-        return
+        return False
 
     def _send_packet(self, handler, payload, data):
         """Generate packet based on payload and data and send it to client."""
