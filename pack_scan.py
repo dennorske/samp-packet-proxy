@@ -32,16 +32,18 @@ SAMP_SERVER_LOCALHOST = "127.0.0.1"
 # Do not touch code below this line.
 #####################################################################
 SAMP_SERVER_ADDRESS_BYTES = socket.inet_aton(SAMP_SERVER_ADDRESS)
+PUBLIC_PORT_BYTES = SERVER_PORT.to_bytes(2, byteorder="little")
 SHORT_SLEEP_DURATION = 1
 RETRY_SLEEP_DURATION = 2
 QUERY_TIMEOUT = 4
 
 
 class StatusType(Enum):
-    info = "i"
-    rules = "r"
-    clients = "c"
-    details = "d"
+    info: bytes = b"i"
+    rules: bytes = b"r"
+    clients: bytes = b"c"
+    details: bytes = b"d"
+    ping: bytes = b"p0101"
 
 
 class ServerStatus:
@@ -118,21 +120,20 @@ class UDPServer:
                 time.sleep(RETRY_SLEEP_DURATION)
 
     def ping(self):
-        pack = self.assemblePacket("p0101")
+        pack = self.assemblePacket(StatusType.ping)
         self.sock.sendto(pack, (SAMP_SERVER_ADDRESS, SERVER_PORT))
         try:
             reply = self.sock.recv(1024)[10:]
-            server.isonline = reply == b"p0101"
+            server.isonline = reply == StatusType.ping
             return server.isonline
         except socket.timeout:
             return False
 
-    def assemblePacket(self, type):
-        PUBLIC_PORT_BYTES = SERVER_PORT.to_bytes(2, byteorder="little")
+    def assemblePacket(self, type: bytes):
         packet = b"SAMP"
         packet += SAMP_SERVER_ADDRESS_BYTES
         packet += PUBLIC_PORT_BYTES
-        packet += bytes(type, "utf-8")
+        packet += type
         return packet
 
     def start(self):
@@ -146,13 +147,12 @@ class UDPServer:
         self.server.stop_thread = True
         # self.server.shutdown()
 
-    def handle_external_packet(
-        self, handler, sampserver: ServerStatus = server
-    ):
+    def handle_external_packet(self, handler, sampserver: ServerStatus = server):
         """When external clients query the server, this method is called.
         Depending on which data is requested, the reply is generated.
         """
         payload, _ = handler.request
+        opcode: bytes = payload[10:11]
 
         if not sampserver.isonline:
             logging.debug("Server is offline")
@@ -160,7 +160,9 @@ class UDPServer:
         if payload[4:8] != SAMP_SERVER_ADDRESS_BYTES:
             logging.debug("Server address does not match")
             return False
-        if payload[10] not in b"pirdc":
+        if len(payload) < 10:
+            return False
+        if opcode not in b"pirdc":
             logging.debug("Invalid opcode received")
             return False
 
@@ -172,12 +174,17 @@ class UDPServer:
             b"c": sampserver.clients,
         }
 
-        response_data = data_lookup.get(payload[10:11])
+        response_data = data_lookup.get(opcode)
         if response_data is not None:
             self._send_packet(handler, payload, response_data)
             return True
-        logging.debug("Ping packet received")
+        elif opcode == b"p":
+            logging.debug("Ping packet received")
+            return False
+        
+        logging.debug(f"Unexpected opcode without associated data: {opcode.decode()}")
         return False
+
 
     def _send_packet(self, handler, payload, data):
         """Generate packet based on payload and data and send it to client."""
