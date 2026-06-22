@@ -164,8 +164,12 @@ class UDPServer:
             logging.debug("Invalid opcode received")
             return False
 
+        # Handle ping separately — echo back the payload as pong
+        if payload[10:11] == b"p":
+            self._send_packet(handler, payload, None)
+            return True
+
         data_lookup = {
-            b"p": None,
             b"i": sampserver.info,
             b"r": sampserver.rules,
             b"d": sampserver.detail,
@@ -176,7 +180,7 @@ class UDPServer:
         if response_data is not None:
             self._send_packet(handler, payload, response_data)
             return True
-        logging.debug("Ping packet received")
+        logging.debug("Unknown query type received")
         return False
 
     def _send_packet(self, handler, payload, data):
@@ -196,7 +200,6 @@ def create_handler(func):
                 func(self)
             except Exception as e:
                 print("An error occurred: %s" % (e,))
-            func(self)
 
     return Handler
 
